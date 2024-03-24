@@ -1,10 +1,10 @@
-use std::env;
-fn main() {
-    let args: Vec<String> = env::args().collect();
+use std::error::Error;
+use grep::utils::read_args;
 
-    if args.len() <= 1 {
-        println!("ERROR: Faltan argumentos");
-    }
+fn main() -> Result<(), Box<dyn Error>> {
+    let args = read_args()?;
 
     println!("{:?}", args);
+
+    Ok(())
 }
