@@ -1,9 +1,9 @@
-use std::collections::VecDeque;
-use std::io::{Error, ErrorKind};
+use crate::evaluated_step::EvaluatedStep;
+use crate::regex_rep::RegexRep;
 use crate::regex_step::RegexStep;
 use crate::regex_val::RegexVal;
-use crate::regex_rep::RegexRep;
-use crate::evaluated_step::EvaluatedStep;
+use std::collections::VecDeque;
+use std::io::{Error, ErrorKind};
 
 #[derive(Debug, Clone)]
 pub struct Regex {
@@ -17,23 +17,34 @@ impl Regex {
         // Recorremos la expression char por char con .next()
         let mut char_iterator = expression.chars();
 
+        if !&expression.starts_with('^'){
+            println!("NEW RegexStep without ^");
+            let first_step = RegexStep {
+                rep: RegexRep::Any,
+                val: RegexVal::Wildcard,
+            };
+
+            steps.push(first_step)
+        }
+
         while let Some(c) = char_iterator.next() {
             let step = match c {
                 '.' => {
-                    println!("NEW RegexStep Exact 1 Wildcard {}", c);
+                    //println!("NEW RegexStep {}", c);
                     Some(RegexStep {
                         rep: RegexRep::Exact(1),
                         val: RegexVal::Wildcard,
                     })
-                },
+                }
                 'a'..='z' => {
-                    println!("NEW RegexStep Exact 1 Literal {}", c);
+                    //println!("NEW RegexStep {}", c);
                     Some(RegexStep {
                         rep: RegexRep::Exact(1),
                         val: RegexVal::Literal(c),
                     })
-                },
+                }
                 '*' => {
+                    //println!("NEW RegexStep {}", c);
                     if let Some(last) = steps.last_mut() {
                         last.rep = RegexRep::Any;
                     } else {
@@ -41,13 +52,44 @@ impl Regex {
                     }
                     None
                 }
-                '\\' => match char_iterator.next() {
-                    Some(literal) => Some(RegexStep {
-                        rep: RegexRep::Exact(1),
-                        val: RegexVal::Literal(literal),
-                    }),
-                    None => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
-                },
+                '\\' => {
+                    //println!("NEW RegexStep {}", c);
+                    match char_iterator.next() {
+                        Some(literal) => Some(RegexStep {
+                            rep: RegexRep::Exact(1),
+                            val: RegexVal::Literal(literal),
+                        }),
+                        None => {
+                            return Err(Error::new(ErrorKind::Other, "Unexpected character found"))
+                        }
+                    }
+                }
+                '[' => {
+                    let mut allowed_chars: Vec<char> = vec![];
+                    let mut not_allowed = false;
+                    while let Some(next_char) = char_iterator.next(){
+                        match next_char {
+                            ']' => break,
+                            '^' => not_allowed = true,
+                            _ => allowed_chars.push(next_char)
+                            
+                        }
+                    }
+        
+                    //println!("NEW RegexStep {}", c);
+                    if not_allowed {
+                        Some(RegexStep {
+                            rep: RegexRep::Exact(1),
+                            val: RegexVal::NotAllowed(allowed_chars),
+                        })
+                    } else {
+                        Some(RegexStep {
+                            rep: RegexRep::Exact(1),
+                            val: RegexVal::Allowed(allowed_chars),
+                        })
+                    }
+                }
+                
                 _ => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
             };
 
@@ -73,7 +115,6 @@ impl Regex {
             match step.rep {
                 RegexRep::Exact(n) => {
                     let mut match_size = 0;
-                    println!("n {}", n);
                     for _ in [1..n] {
                         let size = step.val.matches(&value[index..]);
 
