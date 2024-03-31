@@ -1,1 +1,8 @@
-acd
+la aeiou es una vocal
+la a es una vocal
+la b es una vocal
+la e es una vocal
+la i es una vocal
+la c es una vocal
+la o es una vocal
+la u es una vocal

@@ -15,7 +15,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     for value in lines {
         let regex = Regex::new(expression);
         match regex?.test(&value) {
-            Ok(result) => println!("Result: {}", result),
+            Ok(result) => {
+                if result {
+                    println!("{}", &value)
+                }
+            }
             Err(err) => println!("Error {}", err),
         }
     }

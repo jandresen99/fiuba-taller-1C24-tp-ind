@@ -38,6 +38,10 @@ impl Regex {
                     rep: RegexRep::Exact(1),
                     val: RegexVal::Literal(c),
                 }),
+                ' ' => Some(RegexStep {
+                    rep: RegexRep::Exact(1),
+                    val: RegexVal::Literal(c),
+                }),
                 '*' => {
                     if let Some(last) = steps.last_mut() {
                         last.rep = RegexRep::Any;
@@ -181,7 +185,7 @@ impl Regex {
         let mut index = 0;
 
         'steps: while let Some(step) = queue.pop_front() {
-            println!("step {:?}", step);
+            //println!("step {:?}", step);
             match step.rep {
                 RegexRep::Exact(n) => {
                     let mut match_size = 0;
