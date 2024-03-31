@@ -9,7 +9,7 @@ pub enum RegexVal {
 
 impl RegexVal {
     pub fn matches(&self, value: &str) -> usize {
-        println!("matching value '{}' with {:?}", value, self);
+        //println!("matching value '{}' with {:?}", value, self);
         match self {
             Self::Literal(l) => {
                 if Some(*l) == value.chars().next() {
@@ -27,7 +27,7 @@ impl RegexVal {
             }
             Self::Allowed(v) => {
                 if let Some(a) = value.chars().next() {
-                    if v.contains(&a){
+                    if v.contains(&a) {
                         a.len_utf8()
                     } else {
                         0
@@ -35,11 +35,10 @@ impl RegexVal {
                 } else {
                     0
                 }
-
             }
             Self::NotAllowed(v) => {
                 if let Some(a) = value.chars().next() {
-                    if !v.contains(&a){
+                    if !v.contains(&a) {
                         a.len_utf8()
                     } else {
                         0
@@ -47,7 +46,6 @@ impl RegexVal {
                 } else {
                     0
                 }
-
             }
         }
     }

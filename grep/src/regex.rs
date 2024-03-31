@@ -17,34 +17,28 @@ impl Regex {
         // Recorremos la expression char por char con .next()
         let mut char_iterator = expression.chars();
 
-        if !&expression.starts_with('^'){
-            println!("NEW RegexStep without ^");
+        if !&expression.starts_with('^') {
             let first_step = RegexStep {
                 rep: RegexRep::Any,
                 val: RegexVal::Wildcard,
             };
 
             steps.push(first_step)
+        } else {
+            char_iterator.next();
         }
 
         while let Some(c) = char_iterator.next() {
             let step = match c {
-                '.' => {
-                    //println!("NEW RegexStep {}", c);
-                    Some(RegexStep {
-                        rep: RegexRep::Exact(1),
-                        val: RegexVal::Wildcard,
-                    })
-                }
-                'a'..='z' => {
-                    //println!("NEW RegexStep {}", c);
-                    Some(RegexStep {
-                        rep: RegexRep::Exact(1),
-                        val: RegexVal::Literal(c),
-                    })
-                }
+                '.' => Some(RegexStep {
+                    rep: RegexRep::Exact(1),
+                    val: RegexVal::Wildcard,
+                }),
+                'a'..='z' => Some(RegexStep {
+                    rep: RegexRep::Exact(1),
+                    val: RegexVal::Literal(c),
+                }),
                 '*' => {
-                    //println!("NEW RegexStep {}", c);
                     if let Some(last) = steps.last_mut() {
                         last.rep = RegexRep::Any;
                     } else {
@@ -52,31 +46,24 @@ impl Regex {
                     }
                     None
                 }
-                '\\' => {
-                    //println!("NEW RegexStep {}", c);
-                    match char_iterator.next() {
-                        Some(literal) => Some(RegexStep {
-                            rep: RegexRep::Exact(1),
-                            val: RegexVal::Literal(literal),
-                        }),
-                        None => {
-                            return Err(Error::new(ErrorKind::Other, "Unexpected character found"))
-                        }
-                    }
-                }
+                '\\' => match char_iterator.next() {
+                    Some(literal) => Some(RegexStep {
+                        rep: RegexRep::Exact(1),
+                        val: RegexVal::Literal(literal),
+                    }),
+                    None => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
+                },
                 '[' => {
                     let mut allowed_chars: Vec<char> = vec![];
                     let mut not_allowed = false;
-                    while let Some(next_char) = char_iterator.next(){
+                    while let Some(next_char) = char_iterator.next() {
                         match next_char {
                             ']' => break,
                             '^' => not_allowed = true,
-                            _ => allowed_chars.push(next_char)
-                            
+                            _ => allowed_chars.push(next_char),
                         }
                     }
-        
-                    //println!("NEW RegexStep {}", c);
+
                     if not_allowed {
                         Some(RegexStep {
                             rep: RegexRep::Exact(1),
@@ -89,7 +76,90 @@ impl Regex {
                         })
                     }
                 }
-                
+                '{' => {
+                    let last_val: RegexVal;
+                    if let Some(last) = steps.last_mut() {
+                        last_val = last.val.clone()
+                    } else {
+                        return Err(Error::new(ErrorKind::Other, "Unexpected '*' found"));
+                    }
+
+                    let mut min = String::new();
+                    let mut max = String::new();
+
+                    let mut min_done = false;
+
+                    while let Some(c) = char_iterator.next() {
+                        if c.is_digit(10) {
+                            if !min_done {
+                                min.push(c);
+                            } else {
+                                max.push(c);
+                            }
+                        } else if c == ',' {
+                            min_done = true;
+                            continue;
+                        } else if c == '}' {
+                            break;
+                        } else {
+                            return Err(Error::new(
+                                ErrorKind::Other,
+                                "Unexpected character found inside bracket",
+                            ));
+                        }
+                    }
+
+                    let min_usize = min.parse::<usize>();
+                    let max_usize = max.parse::<usize>();
+
+                    let final_min: Option<usize>;
+                    let final_max: Option<usize>;
+
+                    match min_usize {
+                        Ok(min_num) => {
+                            final_min = Some(min_num);
+                        }
+                        Err(_err) => {
+                            final_min = None;
+                        }
+                    }
+
+                    match max_usize {
+                        Ok(max_num) => {
+                            final_max = Some(max_num);
+                        }
+                        Err(_err) => {
+                            final_max = None;
+                        }
+                    }
+
+                    Some(RegexStep {
+                        rep: RegexRep::Range(final_min, final_max),
+                        val: last_val,
+                    })
+                }
+                '+' => {
+                    let last_val: RegexVal;
+                    if let Some(last) = steps.last_mut() {
+                        last_val = last.val.clone()
+                    } else {
+                        return Err(Error::new(ErrorKind::Other, "Unexpected '*' found"));
+                    }
+
+                    Some(RegexStep {
+                        rep: RegexRep::Any,
+                        val: last_val,
+                    })
+                }
+                '?' => {
+                    if let Some(last) = steps.last_mut() {
+                        last.rep = RegexRep::Optional;
+                    } else {
+                        return Err(Error::new(ErrorKind::Other, "Unexpected '?' found"));
+                    }
+                    None
+                }
+
                 _ => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
             };
 
@@ -137,6 +207,22 @@ impl Regex {
                         backtrackable: false,
                     })
                 }
+                RegexRep::Optional => {
+                    let mut match_size = 0;
+
+                    let size = step.val.matches(&value[index..]);
+
+                    if size != 0 {
+                        match_size += size;
+                        index += size;
+                    }
+
+                    stack.push(EvaluatedStep {
+                        step: step,
+                        match_size,
+                        backtrackable: false,
+                    })
+                }
                 RegexRep::Any => {
                     let mut keep_matching = true;
                     while keep_matching {
@@ -153,7 +239,40 @@ impl Regex {
                         }
                     }
                 }
-                RegexRep::Range(_, _) => todo!(),
+                RegexRep::Range(min, max) => {
+                    let mut keep_matching = true;
+                    let mut match_counter = 1; // arranco con 1 porque ya conte el caracter anterior
+                    while keep_matching {
+                        let match_size = step.val.matches(&value[index..]);
+                        if match_size != 0 {
+                            match_counter += 1;
+                            index += match_size;
+                            stack.push(EvaluatedStep {
+                                step: step.clone(),
+                                match_size,
+                                backtrackable: false,
+                            })
+                        } else {
+                            keep_matching = false;
+                        }
+                    }
+
+                    let matches_range: bool;
+
+                    match (min, max) {
+                        (Some(min_val), Some(max_val)) => {
+                            matches_range =
+                                match_counter >= min_val as i32 && match_counter <= max_val as i32
+                        }
+                        (Some(min_val), None) => matches_range = match_counter >= min_val as i32,
+                        (None, Some(max_val)) => matches_range = match_counter <= max_val as i32,
+                        (None, None) => matches_range = false, // No se proporcionan límites, no se puede verificar
+                    }
+
+                    if !matches_range {
+                        return Ok(false);
+                    }
+                }
             }
         }
 
