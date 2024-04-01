@@ -5,4 +5,5 @@ pub enum RegexRep {
     Exact(usize),                        // {n}
     Range(Option<usize>, Option<usize>), // {n,m}
     Optional,                            // ?
+    Last,                                // $
 }

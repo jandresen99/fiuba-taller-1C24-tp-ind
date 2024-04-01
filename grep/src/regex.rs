@@ -85,7 +85,7 @@ impl Regex {
                     if let Some(last) = steps.last_mut() {
                         last_val = last.val.clone()
                     } else {
-                        return Err(Error::new(ErrorKind::Other, "Unexpected '*' found"));
+                        return Err(Error::new(ErrorKind::Other, "Unexpected '{' found"));
                     }
 
                     let mut min = String::new();
@@ -163,6 +163,17 @@ impl Regex {
                     }
                     None
                 }
+                '$' => match char_iterator.next() {
+                    None => {
+                        if let Some(last) = steps.last_mut() {
+                            last.rep = RegexRep::Last;
+                        } else {
+                            return Err(Error::new(ErrorKind::Other, "Unexpected '$' found"));
+                        }
+                        None
+                    }
+                    Some(_) => return Err(Error::new(ErrorKind::Other, "Unexpected '$' found")),
+                },
 
                 _ => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
             };
@@ -210,6 +221,27 @@ impl Regex {
                         match_size,
                         backtrackable: false,
                     })
+                }
+                RegexRep::Last => {
+                    let mut match_size = 0;
+
+                    let size = step.val.matches(&value[index..]);
+
+                    if size == 0 {
+                        return Ok(false);
+                    } else {
+                        match_size += size;
+                        index += size;
+
+                        match value.chars().nth(index) {
+                            Some(_) => return Ok(false),
+                            None => stack.push(EvaluatedStep {
+                                step: step,
+                                match_size,
+                                backtrackable: false,
+                            }),
+                        }
+                    }
                 }
                 RegexRep::Optional => {
                     let mut match_size = 0;
