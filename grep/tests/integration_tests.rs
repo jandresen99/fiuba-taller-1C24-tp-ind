@@ -111,3 +111,169 @@ fn vertical_var_and_plus_test() {
     assert_eq!(Regex::new(expression).unwrap().test(&value6).unwrap(), true);
     assert_eq!(Regex::new(expression).unwrap().test(&value7).unwrap(), true);
 }
+
+#[test]
+fn text_and_brackets_test() {
+    let expression = "la [aeiou] es una vocal";
+    let value1 = "la a es una vocal";
+    let value2 = "la e es una vocal";
+    let value3 = "la i es una vocal";
+    let value4 = "la o es una vocal";
+    let value5 = "la u es una vocal";
+    let value6 = "la b es una vocal";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(Regex::new(expression).unwrap().test(&value2).unwrap(), true);
+    assert_eq!(Regex::new(expression).unwrap().test(&value3).unwrap(), true);
+    assert_eq!(Regex::new(expression).unwrap().test(&value4).unwrap(), true);
+    assert_eq!(Regex::new(expression).unwrap().test(&value5).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value6).unwrap(),
+        false
+    );
+}
+
+#[test]
+fn text_and_brackets_denied_test() {
+    let expression = "la [^aeiou] es una vocal";
+    let value1 = "la a es una vocal";
+    let value2 = "la e es una vocal";
+    let value3 = "la i es una vocal";
+    let value4 = "la o es una vocal";
+    let value5 = "la u es una vocal";
+    let value6 = "la b es una vocal";
+
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value1).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value2).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value3).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value4).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value5).unwrap(),
+        false
+    );
+    assert_eq!(Regex::new(expression).unwrap().test(&value6).unwrap(), true);
+}
+
+#[test]
+fn alpha_and_plus_test() {
+    let expression = "hola [[:alpha:]]+";
+    let value1 = "hola a";
+    let value2 = "hola aaa";
+    let value3 = "hola ";
+    let value4 = "hola 1";
+    let value5 = "hola 11";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(Regex::new(expression).unwrap().test(&value2).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value3).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value4).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value5).unwrap(),
+        false
+    );
+}
+
+#[test]
+fn digit_and_text_test() {
+    let expression = "[[:digit:]] es un numero";
+    let value1 = "45 es un numero";
+    let value2 = "a es un numero";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value2).unwrap(),
+        false
+    );
+}
+
+#[test]
+fn alnum_and_text_test() {
+    let expression = "el caracter [[:alnum:]] no es un simbolo";
+    let value1 = "el caracter a no es un simbolo";
+    let value2 = "el caracter 4 no es un simbolo";
+    let value3 = "el caracter ? no es un simbolo";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(Regex::new(expression).unwrap().test(&value2).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value3).unwrap(),
+        false
+    );
+}
+
+#[test]
+fn space_and_text_test() {
+    let expression = "hola[[:space:]]mundo";
+    let value1 = "hola mundo";
+    let value2 = "holamundo";
+    let value3 = "holaamundo";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value2).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value3).unwrap(),
+        false
+    );
+}
+
+#[test]
+fn upper_and_text_test() {
+    let expression = "[[:upper:]]ascal[[:upper:]]ase";
+    let value1 = "PascalPase";
+    let value2 = "Pascalpase";
+    let value3 = "pascalPase";
+    let value4 = "pascalpase";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value2).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value3).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value4).unwrap(),
+        false
+    );
+}
+
+#[test]
+fn anchoring_test() {
+    let expression = "es el fin$";
+    let value1 = "este es el fin";
+    let value2 = "es el fin no?";
+    let value3 = "es el finde";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value2).unwrap(),
+        false
+    );
+    assert_eq!(
+        Regex::new(expression).unwrap().test(&value3).unwrap(),
+        false
+    );
+}
