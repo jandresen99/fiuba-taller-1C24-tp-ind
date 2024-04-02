@@ -1,4 +1,5 @@
 use crate::evaluated_step::EvaluatedStep;
+use crate::regex_class::RegexClass;
 use crate::regex_rep::RegexRep;
 use crate::regex_step::RegexStep;
 use crate::regex_val::RegexVal;
@@ -55,31 +56,78 @@ impl Regex {
                         rep: RegexRep::Exact(1),
                         val: RegexVal::Literal(literal),
                     }),
-                    None => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
+                    None => {
+                        return Err(Error::new(
+                            ErrorKind::Other,
+                            "Unexpected character found (1)",
+                        ))
+                    }
                 },
-                '[' => {
-                    let mut allowed_chars: Vec<char> = vec![];
-                    let mut not_allowed = false;
-                    while let Some(next_char) = char_iterator.next() {
-                        match next_char {
-                            ']' => break,
-                            '^' => not_allowed = true,
-                            _ => allowed_chars.push(next_char),
-                        }
-                    }
+                '[' => match char_iterator.next() {
+                    Some(char) => match char {
+                        '[' => {
+                            let next_five_chars: String = char_iterator.by_ref().take(7).collect();
 
-                    if not_allowed {
-                        Some(RegexStep {
-                            rep: RegexRep::Exact(1),
-                            val: RegexVal::NotAllowed(allowed_chars),
-                        })
-                    } else {
-                        Some(RegexStep {
-                            rep: RegexRep::Exact(1),
-                            val: RegexVal::Allowed(allowed_chars),
-                        })
+                            let class_type = match next_five_chars.as_str() {
+                                ":alnum:" => RegexClass::Alphanumeric,
+                                ":alpha:" => RegexClass::Alphabetic,
+                                ":digit:" => RegexClass::Digit,
+                                ":lower:" => RegexClass::Lowercase,
+                                ":upper:" => RegexClass::Uppercase,
+                                ":space:" => RegexClass::Whitespace,
+                                ":punct:" => RegexClass::Punctuation,
+                                _ => {
+                                    return Err(Error::new(
+                                        ErrorKind::Other,
+                                        "Unexpected class found",
+                                    ))
+                                }
+                            };
+
+                            char_iterator.next();
+                            char_iterator.next();
+
+                            Some(RegexStep {
+                                rep: RegexRep::Exact(1),
+                                val: RegexVal::Class(class_type),
+                            })
+                        }
+                        _ => {
+                            let mut allowed_chars: Vec<char> = vec![];
+                            let mut not_allowed = false;
+
+                            if char == '^' {
+                                not_allowed = true;
+                            }
+
+                            while let Some(next_char) = char_iterator.next() {
+                                match next_char {
+                                    ']' => break,
+                                    '^' => not_allowed = true,
+                                    _ => allowed_chars.push(next_char),
+                                }
+                            }
+
+                            if not_allowed {
+                                Some(RegexStep {
+                                    rep: RegexRep::Exact(1),
+                                    val: RegexVal::NotAllowed(allowed_chars),
+                                })
+                            } else {
+                                Some(RegexStep {
+                                    rep: RegexRep::Exact(1),
+                                    val: RegexVal::Allowed(allowed_chars),
+                                })
+                            }
+                        }
+                    },
+                    None => {
+                        return Err(Error::new(
+                            ErrorKind::Other,
+                            "Unexpected character found (2)",
+                        ))
                     }
-                }
+                },
                 '{' => {
                     let last_val: RegexVal;
                     if let Some(last) = steps.last_mut() {
@@ -175,10 +223,16 @@ impl Regex {
                     Some(_) => return Err(Error::new(ErrorKind::Other, "Unexpected '$' found")),
                 },
 
-                _ => return Err(Error::new(ErrorKind::Other, "Unexpected character found")),
+                _ => {
+                    return Err(Error::new(
+                        ErrorKind::Other,
+                        "Unexpected character found (3)",
+                    ))
+                }
             };
 
             if let Some(p) = step {
+                //println!("added step {:?}", p);
                 steps.push(p);
             }
         }
@@ -196,7 +250,7 @@ impl Regex {
         let mut index = 0;
 
         'steps: while let Some(step) = queue.pop_front() {
-            //println!("step {:?}", step);
+            //println!("running step {:?}", step);
             match step.rep {
                 RegexRep::Exact(n) => {
                     let mut match_size = 0;
