@@ -96,14 +96,15 @@ impl Regex {
                             let mut allowed_chars: Vec<char> = vec![];
                             let mut not_allowed = false;
 
-                            if char == '^' {
-                                not_allowed = true;
+                            match char {
+                                ']' => break,
+                                '^' => not_allowed = true,
+                                _ => allowed_chars.push(char),
                             }
 
                             while let Some(next_char) = char_iterator.next() {
                                 match next_char {
                                     ']' => break,
-                                    '^' => not_allowed = true,
                                     _ => allowed_chars.push(next_char),
                                 }
                             }
