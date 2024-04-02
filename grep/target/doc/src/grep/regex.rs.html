@@ -403,10 +403,6 @@
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::evaluated_step::EvaluatedStep;
 <span class="kw">use </span><span class="kw">crate</span>::regex_class::RegexClass;
 <span class="kw">use </span><span class="kw">crate</span>::regex_rep::RegexRep;
@@ -448,11 +444,7 @@
                         rep: RegexRep::Exact(<span class="number">1</span>),
                         val: RegexVal::Wildcard,
                     }),
-                    <span class="string">'a'</span>..=<span class="string">'z' </span>=&gt; <span class="prelude-val">Some</span>(RegexStep {
-                        rep: RegexRep::Exact(<span class="number">1</span>),
-                        val: RegexVal::Literal(c),
-                    }),
-                    <span class="string">' ' </span>=&gt; <span class="prelude-val">Some</span>(RegexStep {
+                    <span class="string">'a'</span>..=<span class="string">'z' </span>| <span class="string">' ' </span>=&gt; <span class="prelude-val">Some</span>(RegexStep {
                         rep: RegexRep::Exact(<span class="number">1</span>),
                         val: RegexVal::Literal(c),
                     }),
@@ -781,8 +773,8 @@
                             (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(max_val)) =&gt; {
                                 matches_range = match_counter &lt;= max_val <span class="kw">as </span>i32
                             }
-                            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; matches_range = <span class="bool-val">false</span>, <span class="comment">// No se proporcionan límites, no se puede verificar
-                        </span>}
+                            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; matches_range = <span class="bool-val">false</span>,
+                        }
 
                         <span class="kw">if </span>!matches_range {
                             <span class="kw">continue </span><span class="lifetime">'main</span>;

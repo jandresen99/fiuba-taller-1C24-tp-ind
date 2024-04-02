@@ -39,11 +39,7 @@ impl Regex {
                         rep: RegexRep::Exact(1),
                         val: RegexVal::Wildcard,
                     }),
-                    'a'..='z' => Some(RegexStep {
-                        rep: RegexRep::Exact(1),
-                        val: RegexVal::Literal(c),
-                    }),
-                    ' ' => Some(RegexStep {
+                    'a'..='z' | ' ' => Some(RegexStep {
                         rep: RegexRep::Exact(1),
                         val: RegexVal::Literal(c),
                     }),
@@ -372,7 +368,7 @@ impl Regex {
                             (None, Some(max_val)) => {
                                 matches_range = match_counter <= max_val as i32
                             }
-                            (None, None) => matches_range = false, // No se proporcionan límites, no se puede verificar
+                            (None, None) => matches_range = false,
                         }
 
                         if !matches_range {
