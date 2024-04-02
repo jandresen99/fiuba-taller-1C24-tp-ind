@@ -1,1 +1,0 @@
-# taller-1C24-tp-ind
