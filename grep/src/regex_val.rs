@@ -131,3 +131,67 @@ impl RegexVal {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_matches_literal() {
+        let regex_val = RegexVal::Literal('a');
+        assert_eq!(regex_val.matches("apple"), 1);
+        assert_eq!(regex_val.matches("banana"), 0);
+    }
+
+    #[test]
+    fn test_matches_wildcard() {
+        let regex_val = RegexVal::Wildcard;
+        assert_eq!(regex_val.matches("apple"), 1);
+        assert_eq!(regex_val.matches(""), 0);
+    }
+
+    #[test]
+    fn test_matches_allowed() {
+        let regex_val = RegexVal::Allowed(vec!['a', 'e', 'i', 'o', 'u']);
+        assert_eq!(regex_val.matches("apple"), 1);
+        assert_eq!(regex_val.matches("banana"), 0);
+    }
+
+    #[test]
+    fn test_matches_not_allowed() {
+        let regex_val = RegexVal::NotAllowed(vec!['a', 'e', 'i', 'o', 'u']);
+        assert_eq!(regex_val.matches("apple"), 0);
+        assert_eq!(regex_val.matches("banana"), 1);
+    }
+
+    #[test]
+    fn test_matches_class() {
+        let regex_val_alphanumeric = RegexVal::Class(RegexClass::Alphanumeric);
+        assert_eq!(regex_val_alphanumeric.matches("1"), 1);
+        assert_eq!(regex_val_alphanumeric.matches("!"), 0);
+
+        let regex_val_alphabetic = RegexVal::Class(RegexClass::Alphabetic);
+        assert_eq!(regex_val_alphabetic.matches("a"), 1);
+        assert_eq!(regex_val_alphabetic.matches("1"), 0);
+
+        let regex_val_digit = RegexVal::Class(RegexClass::Digit);
+        assert_eq!(regex_val_digit.matches("1"), 1);
+        assert_eq!(regex_val_digit.matches("a"), 0);
+
+        let regex_val_lowercase = RegexVal::Class(RegexClass::Lowercase);
+        assert_eq!(regex_val_lowercase.matches("a"), 1);
+        assert_eq!(regex_val_lowercase.matches("A"), 0);
+
+        let regex_val_uppercase = RegexVal::Class(RegexClass::Uppercase);
+        assert_eq!(regex_val_uppercase.matches("A"), 1);
+        assert_eq!(regex_val_uppercase.matches("a"), 0);
+
+        let regex_val_whitespace = RegexVal::Class(RegexClass::Whitespace);
+        assert_eq!(regex_val_whitespace.matches(" "), 1);
+        assert_eq!(regex_val_whitespace.matches("a"), 0);
+
+        let regex_val_punctuation = RegexVal::Class(RegexClass::Punctuation);
+        assert_eq!(regex_val_punctuation.matches("!"), 1);
+        assert_eq!(regex_val_punctuation.matches("a"), 0);
+    }
+}

@@ -1,7 +1,7 @@
 use grep::regex::Regex;
 
 #[test]
-fn period_test() {
+fn test_period() {
     let expression = "ab.de";
     let value1 = "abcde";
     let value2 = "abde";
@@ -25,7 +25,7 @@ fn period_test() {
 }
 
 #[test]
-fn period_and_repetition_test() {
+fn test_period_and_repetition() {
     let expression = "ab.*cd";
     let value1 = "abxcd";
     let value2 = "abxxxcd";
@@ -43,7 +43,7 @@ fn period_and_repetition_test() {
 }
 
 #[test]
-fn brackets_test() {
+fn test_brackets() {
     let expression = "a[bc]d";
     let value1 = "abd";
     let value2 = "acd";
@@ -63,7 +63,7 @@ fn brackets_test() {
 }
 
 #[test]
-fn braces_test() {
+fn test_braces() {
     let expression = "ab{2,4}cd";
     let value1 = "abbcd";
     let value2 = "abbbcd";
@@ -90,7 +90,7 @@ fn braces_test() {
 }
 
 #[test]
-fn vertical_var_and_plus_test() {
+fn test_vertical_var_and_plus() {
     let expression = "abc|de+f";
     let value1 = "abc";
     let value2 = "abcdef";
@@ -113,7 +113,7 @@ fn vertical_var_and_plus_test() {
 }
 
 #[test]
-fn text_and_brackets_test() {
+fn test_text_and_brackets() {
     let expression = "la [aeiou] es una vocal";
     let value1 = "la a es una vocal";
     let value2 = "la e es una vocal";
@@ -134,7 +134,7 @@ fn text_and_brackets_test() {
 }
 
 #[test]
-fn text_and_brackets_denied_test() {
+fn test_text_and_brackets_denied() {
     let expression = "la [^aeiou] es una vocal";
     let value1 = "la a es una vocal";
     let value2 = "la e es una vocal";
@@ -167,7 +167,7 @@ fn text_and_brackets_denied_test() {
 }
 
 #[test]
-fn alpha_and_plus_test() {
+fn test_alpha_and_plus() {
     let expression = "hola [[:alpha:]]+";
     let value1 = "hola a";
     let value2 = "hola aaa";
@@ -192,7 +192,7 @@ fn alpha_and_plus_test() {
 }
 
 #[test]
-fn digit_and_text_test() {
+fn test_digit_and_text() {
     let expression = "[[:digit:]] es un numero";
     let value1 = "45 es un numero";
     let value2 = "a es un numero";
@@ -205,7 +205,7 @@ fn digit_and_text_test() {
 }
 
 #[test]
-fn alnum_and_text_test() {
+fn test_alnum_and_text() {
     let expression = "el caracter [[:alnum:]] no es un simbolo";
     let value1 = "el caracter a no es un simbolo";
     let value2 = "el caracter 4 no es un simbolo";
@@ -220,7 +220,7 @@ fn alnum_and_text_test() {
 }
 
 #[test]
-fn space_and_text_test() {
+fn test_space_and_text() {
     let expression = "hola[[:space:]]mundo";
     let value1 = "hola mundo";
     let value2 = "holamundo";
@@ -238,7 +238,7 @@ fn space_and_text_test() {
 }
 
 #[test]
-fn upper_and_text_test() {
+fn test_upper_and_text() {
     let expression = "[[:upper:]]ascal[[:upper:]]ase";
     let value1 = "PascalPase";
     let value2 = "Pascalpase";
@@ -261,7 +261,7 @@ fn upper_and_text_test() {
 }
 
 #[test]
-fn anchoring_test() {
+fn test_anchoring() {
     let expression = "es el fin$";
     let value1 = "este es el fin";
     let value2 = "es el fin no?";
