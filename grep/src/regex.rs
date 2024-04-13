@@ -338,6 +338,7 @@ impl Regex {
                     RegexRep::Range(min, max) => {
                         let mut keep_matching = true;
                         let mut match_counter = 1; // arranco con 1 porque ya conte el caracter anterior
+                        let mut matched_range: bool = false;
                         while keep_matching {
                             let match_size = step.val.matches(&value[index..]);
                             if match_size != 0 {
@@ -347,29 +348,40 @@ impl Regex {
                                     step: step.clone(),
                                     match_size,
                                     backtrackable: false,
-                                })
+                                });
+
+                                match (min, max) {
+                                    (Some(min_val), Some(max_val)) => {
+                                        if match_counter >= min_val as i32
+                                            && match_counter <= max_val as i32
+                                        {
+                                            matched_range = true
+                                        }
+                                        if match_counter == max_val as i32 {
+                                            keep_matching = false
+                                        }
+                                    }
+                                    (Some(min_val), None) => {
+                                        if match_counter >= min_val as i32 {
+                                            matched_range = true
+                                        }
+                                    }
+                                    (None, Some(max_val)) => {
+                                        if match_counter <= max_val as i32 {
+                                            matched_range = true
+                                        }
+                                        if match_counter == max_val as i32 {
+                                            keep_matching = false
+                                        }
+                                    }
+                                    (None, None) => matched_range = false,
+                                }
                             } else {
                                 keep_matching = false;
                             }
                         }
 
-                        let matches_range: bool;
-
-                        match (min, max) {
-                            (Some(min_val), Some(max_val)) => {
-                                matches_range = match_counter >= min_val as i32
-                                    && match_counter <= max_val as i32
-                            }
-                            (Some(min_val), None) => {
-                                matches_range = match_counter >= min_val as i32
-                            }
-                            (None, Some(max_val)) => {
-                                matches_range = match_counter <= max_val as i32
-                            }
-                            (None, None) => matches_range = false,
-                        }
-
-                        if !matches_range {
+                        if !matched_range {
                             continue 'main;
                         }
                     }
