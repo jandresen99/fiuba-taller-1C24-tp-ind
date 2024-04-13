@@ -197,7 +197,7 @@ impl Regex {
                         if let Some(last) = steps.last_mut() {
                             last_val = last.val.clone()
                         } else {
-                            return Err(Error::new(ErrorKind::Other, "Unexpected '*' found"));
+                            return Err(Error::new(ErrorKind::Other, "Unexpected '+' found"));
                         }
 
                         Some(RegexStep {
@@ -260,7 +260,7 @@ impl Regex {
                 match step.rep {
                     RegexRep::Exact(n) => {
                         let mut match_size = 0;
-                        for _ in [1..n] {
+                        for _ in [0..n] {
                             let size = step.val.matches(&value[index..]);
 
                             if size == 0 {
@@ -316,7 +316,7 @@ impl Regex {
                         stack.push(EvaluatedStep {
                             step: step,
                             match_size,
-                            backtrackable: false,
+                            backtrackable: true,
                         })
                     }
                     RegexRep::Any => {

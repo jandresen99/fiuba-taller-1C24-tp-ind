@@ -277,3 +277,11 @@ fn test_anchoring() {
         false
     );
 }
+
+#[test]
+fn test_1() {
+    let expression = "ab.?d";
+    let value1 = "abd";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}
