@@ -66,10 +66,10 @@ impl Regex {
                     '[' => match char_iterator.next() {
                         Some(char) => match char {
                             '[' => {
-                                let next_five_chars: String =
+                                let next_seven_chars: String =
                                     char_iterator.by_ref().take(7).collect();
 
-                                let class_type = match next_five_chars.as_str() {
+                                let class_type = match next_seven_chars.as_str() {
                                     ":alnum:" => RegexClass::Alphanumeric,
                                     ":alpha:" => RegexClass::Alphabetic,
                                     ":digit:" => RegexClass::Digit,
@@ -236,7 +236,6 @@ impl Regex {
                 };
 
                 if let Some(p) = step {
-                    //println!("added step {:?}", p);
                     steps.push(p);
                 }
             }
@@ -258,7 +257,6 @@ impl Regex {
             let mut index = 0;
 
             'steps: while let Some(step) = queue.pop_front() {
-                //println!("running step {:?}", step);
                 match step.rep {
                     RegexRep::Exact(n) => {
                         let mut match_size = 0;

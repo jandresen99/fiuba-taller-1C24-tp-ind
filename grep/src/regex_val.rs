@@ -11,7 +11,6 @@ pub enum RegexVal {
 
 impl RegexVal {
     pub fn matches(&self, value: &str) -> usize {
-        //println!("matching value '{}' with {:?}", value, self);
         match self {
             Self::Literal(l) => {
                 if Some(*l) == value.chars().next() {
