@@ -12,122 +12,110 @@ pub enum RegexVal {
 impl RegexVal {
     pub fn matches(&self, value: &str) -> usize {
         match self {
-            Self::Literal(l) => {
-                if Some(*l) == value.chars().next() {
-                    l.len_utf8()
-                } else {
-                    0
-                }
-            }
-            Self::Wildcard => {
-                if let Some(w) = value.chars().next() {
-                    w.len_utf8()
-                } else {
-                    0
-                }
-            }
-            Self::Allowed(v) => {
-                if let Some(a) = value.chars().next() {
-                    if v.contains(&a) {
-                        a.len_utf8()
-                    } else {
-                        0
-                    }
-                } else {
-                    0
-                }
-            }
-            Self::NotAllowed(v) => {
-                if let Some(a) = value.chars().next() {
-                    if !v.contains(&a) {
-                        a.len_utf8()
-                    } else {
-                        0
-                    }
-                } else {
-                    0
-                }
-            }
-            Self::Class(class_type) => match class_type {
-                RegexClass::Alphanumeric => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_alphanumeric() {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-                RegexClass::Alphabetic => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_alphabetic() {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-                RegexClass::Digit => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_digit(10) {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-                RegexClass::Lowercase => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_lowercase() {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-                RegexClass::Uppercase => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_uppercase() {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-                RegexClass::Whitespace => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_whitespace() {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-                RegexClass::Punctuation => {
-                    if let Some(a) = value.chars().next() {
-                        if a.is_ascii_punctuation() {
-                            a.len_utf8()
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                }
-            },
+            Self::Literal(l) => match_literal(l, value),
+            Self::Wildcard => match_wildcard(value),
+            Self::Allowed(v) => match_allowed(v, value),
+            Self::NotAllowed(v) => match_not_allowed(v, value),
+            Self::Class(class_type) => match_class(class_type, value),
         }
+    }
+}
+
+fn match_literal(l: &char, value: &str) -> usize {
+    if Some(*l) == value.chars().next() {
+        l.len_utf8()
+    } else {
+        0
+    }
+}
+
+fn match_wildcard(value: &str) -> usize {
+    if let Some(w) = value.chars().next() {
+        w.len_utf8()
+    } else {
+        0
+    }
+}
+
+fn match_allowed(v: &Vec<char>, value: &str) -> usize {
+    if let Some(a) = value.chars().next() {
+        if v.contains(&a) {
+            a.len_utf8()
+        } else {
+            0
+        }
+    } else {
+        0
+    }
+}
+
+fn match_not_allowed(v: &Vec<char>, value: &str) -> usize {
+    if let Some(a) = value.chars().next() {
+        if !v.contains(&a) {
+            a.len_utf8()
+        } else {
+            0
+        }
+    } else {
+        0
+    }
+}
+
+fn match_class(class_type: &RegexClass, value: &str) -> usize {
+    if let Some(a) = value.chars().next() {
+        match class_type {
+            RegexClass::Alphanumeric => {
+                if a.is_alphanumeric() {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+            RegexClass::Alphabetic => {
+                if a.is_alphabetic() {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+            RegexClass::Digit => {
+                if a.is_digit(10) {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+            RegexClass::Lowercase => {
+                if a.is_lowercase() {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+            RegexClass::Uppercase => {
+                if a.is_uppercase() {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+            RegexClass::Whitespace => {
+                if a.is_whitespace() {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+            RegexClass::Punctuation => {
+                if a.is_ascii_punctuation() {
+                    a.len_utf8()
+                } else {
+                    0
+                }
+            }
+        }
+    } else {
+        0
     }
 }
 
