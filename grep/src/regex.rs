@@ -11,6 +11,11 @@ pub struct Regex {
     expression_steps: Vec<Vec<RegexStep>>,
 }
 
+enum LoopState {
+    MainLoop,
+    StepsLoop,
+}
+
 impl Regex {
     pub fn new(expression: &str) -> Result<Self, std::io::Error> {
         let mut expression_steps: Vec<Vec<RegexStep>> = vec![];
@@ -67,134 +72,23 @@ impl Regex {
             let mut index = 0;
 
             'steps: while let Some(step) = queue.pop_front() {
-                match step.rep {
+                let loop_state = match step.rep {
                     RegexRep::Exact(n) => {
-                        let mut match_size = 0;
-                        for _ in [0..n] {
-                            let size = step.val.matches(&value[index..]);
-
-                            if size == 0 {
-                                match backtrack(step, &mut stack, &mut queue) {
-                                    Some(size) => {
-                                        index -= size;
-                                        continue 'steps;
-                                    }
-                                    None => continue 'main,
-                                }
-                            } else {
-                                match_size += size;
-                                index += size;
-                            }
-                        }
-                        stack.push(EvaluatedStep {
-                            step: step,
-                            match_size,
-                            backtrackable: false,
-                        })
+                        handle_exact(&step, &mut index, &value, &mut stack, &mut queue, n)?
                     }
-                    RegexRep::Last => {
-                        let mut match_size = 0;
-
-                        let size = step.val.matches(&value[index..]);
-
-                        if size == 0 {
-                            continue 'main;
-                        } else {
-                            match_size += size;
-                            index += size;
-
-                            match value.chars().nth(index) {
-                                Some(_) => continue 'main,
-                                None => stack.push(EvaluatedStep {
-                                    step: step,
-                                    match_size,
-                                    backtrackable: false,
-                                }),
-                            }
-                        }
-                    }
-                    RegexRep::Optional => {
-                        let mut match_size = 0;
-
-                        let size = step.val.matches(&value[index..]);
-
-                        if size != 0 {
-                            match_size += size;
-                            index += size;
-                        }
-
-                        stack.push(EvaluatedStep {
-                            step: step,
-                            match_size,
-                            backtrackable: true,
-                        })
-                    }
-                    RegexRep::Any => {
-                        let mut keep_matching = true;
-                        while keep_matching {
-                            let match_size = step.val.matches(&value[index..]);
-                            if match_size != 0 {
-                                index += match_size;
-                                stack.push(EvaluatedStep {
-                                    step: step.clone(),
-                                    match_size,
-                                    backtrackable: true,
-                                })
-                            } else {
-                                keep_matching = false;
-                            }
-                        }
-                    }
+                    RegexRep::Last => handle_last(&step, &mut index, &value, &mut stack)?,
+                    RegexRep::Optional => handle_optional(&step, &mut index, &value, &mut stack)?,
+                    RegexRep::Any => handle_any(&step, &mut index, &value, &mut stack)?,
                     RegexRep::Range(min, max) => {
-                        let mut keep_matching = true;
-                        let mut match_counter = 1; // arranco con 1 porque ya conte el caracter anterior
-                        let mut matched_range: bool = false;
-                        while keep_matching {
-                            let match_size = step.val.matches(&value[index..]);
-                            if match_size != 0 {
-                                match_counter += 1;
-                                index += match_size;
-                                stack.push(EvaluatedStep {
-                                    step: step.clone(),
-                                    match_size,
-                                    backtrackable: false,
-                                });
-
-                                match (min, max) {
-                                    (Some(min_val), Some(max_val)) => {
-                                        if match_counter >= min_val as i32
-                                            && match_counter <= max_val as i32
-                                        {
-                                            matched_range = true
-                                        }
-                                        if match_counter == max_val as i32 {
-                                            keep_matching = false
-                                        }
-                                    }
-                                    (Some(min_val), None) => {
-                                        if match_counter >= min_val as i32 {
-                                            matched_range = true
-                                        }
-                                    }
-                                    (None, Some(max_val)) => {
-                                        if match_counter <= max_val as i32 {
-                                            matched_range = true
-                                        }
-                                        if match_counter == max_val as i32 {
-                                            keep_matching = false
-                                        }
-                                    }
-                                    (None, None) => matched_range = false,
-                                }
-                            } else {
-                                keep_matching = false;
-                            }
-                        }
-
-                        if !matched_range {
-                            continue 'main;
-                        }
+                        handle_range(&step, &mut index, &value, &mut stack, min, max)?
                     }
+                };
+                match loop_state {
+                    Some(l) => match l {
+                        LoopState::MainLoop => continue 'main,
+                        LoopState::StepsLoop => continue 'steps,
+                    },
+                    None => (),
                 }
             }
             final_result = true;
@@ -439,4 +333,168 @@ fn handle_default(c: char) -> Option<RegexStep> {
         rep: RegexRep::Exact(1),
         val: RegexVal::Literal(c),
     });
+}
+
+fn handle_exact(
+    step: &RegexStep,
+    index: &mut usize,
+    value: &str,
+    stack: &mut Vec<EvaluatedStep>,
+    queue: &mut VecDeque<RegexStep>,
+    n: usize,
+) -> Result<Option<LoopState>, std::io::Error> {
+    let mut match_size = 0;
+    for _ in 0..n {
+        let size = step.val.matches(&value[*index..]);
+
+        if size == 0 {
+            match backtrack(step.clone(), stack, queue) {
+                Some(size) => {
+                    *index -= size;
+                    return Ok(Some(LoopState::StepsLoop));
+                }
+                None => return Ok(Some(LoopState::MainLoop)),
+            }
+        } else {
+            match_size += size;
+            *index += size;
+        }
+    }
+    stack.push(EvaluatedStep {
+        step: step.clone(),
+        match_size,
+        backtrackable: false,
+    });
+    Ok(None)
+}
+
+fn handle_last(
+    step: &RegexStep,
+    index: &mut usize,
+    value: &str,
+    stack: &mut Vec<EvaluatedStep>,
+) -> Result<Option<LoopState>, std::io::Error> {
+    let mut match_size = 0;
+    let size = step.val.matches(&value[*index..]);
+
+    if size == 0 {
+        return Ok(Some(LoopState::MainLoop));
+    } else {
+        match_size += size;
+        *index += size;
+
+        if value.chars().nth(*index).is_some() {
+            return Ok(Some(LoopState::MainLoop));
+        } else {
+            stack.push(EvaluatedStep {
+                step: step.clone(),
+                match_size,
+                backtrackable: false,
+            });
+            return Ok(None);
+        }
+    }
+}
+
+fn handle_optional(
+    step: &RegexStep,
+    index: &mut usize,
+    value: &str,
+    stack: &mut Vec<EvaluatedStep>,
+) -> Result<Option<LoopState>, std::io::Error> {
+    let mut match_size = 0;
+    let size = step.val.matches(&value[*index..]);
+
+    if size != 0 {
+        match_size += size;
+        *index += size;
+    }
+
+    stack.push(EvaluatedStep {
+        step: step.clone(),
+        match_size,
+        backtrackable: true,
+    });
+    Ok(None)
+}
+
+fn handle_any(
+    step: &RegexStep,
+    index: &mut usize,
+    value: &str,
+    stack: &mut Vec<EvaluatedStep>,
+) -> Result<Option<LoopState>, std::io::Error> {
+    let mut keep_matching = true;
+    while keep_matching {
+        let match_size = step.val.matches(&value[*index..]);
+        if match_size != 0 {
+            *index += match_size;
+            stack.push(EvaluatedStep {
+                step: step.clone(),
+                match_size,
+                backtrackable: true,
+            });
+        } else {
+            keep_matching = false;
+        }
+    }
+    Ok(None)
+}
+
+fn handle_range(
+    step: &RegexStep,
+    index: &mut usize,
+    value: &str,
+    stack: &mut Vec<EvaluatedStep>,
+    min: Option<usize>,
+    max: Option<usize>,
+) -> Result<Option<LoopState>, std::io::Error> {
+    let mut keep_matching = true;
+    let mut match_counter = 1;
+    let mut matched_range = false;
+    while keep_matching {
+        let match_size = step.val.matches(&value[*index..]);
+        if match_size != 0 {
+            match_counter += 1;
+            *index += match_size;
+            stack.push(EvaluatedStep {
+                step: step.clone(),
+                match_size,
+                backtrackable: false,
+            });
+
+            match (min, max) {
+                (Some(min_val), Some(max_val)) => {
+                    if match_counter >= min_val && match_counter <= max_val {
+                        matched_range = true
+                    }
+                    if match_counter == max_val {
+                        keep_matching = false
+                    }
+                }
+                (Some(min_val), None) => {
+                    if match_counter >= min_val {
+                        matched_range = true
+                    }
+                }
+                (None, Some(max_val)) => {
+                    if match_counter <= max_val {
+                        matched_range = true
+                    }
+                    if match_counter == max_val {
+                        keep_matching = false
+                    }
+                }
+                (None, None) => matched_range = false,
+            }
+        } else {
+            keep_matching = false;
+        }
+    }
+
+    if !matched_range {
+        return Ok(Some(LoopState::MainLoop));
+    }
+
+    Ok(None)
 }
