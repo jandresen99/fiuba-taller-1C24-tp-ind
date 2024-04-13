@@ -39,10 +39,6 @@ impl Regex {
                         rep: RegexRep::Exact(1),
                         val: RegexVal::Wildcard,
                     }),
-                    'a'..='z' | ' ' => Some(RegexStep {
-                        rep: RegexRep::Exact(1),
-                        val: RegexVal::Literal(c),
-                    }),
                     '*' => {
                         if let Some(last) = steps.last_mut() {
                             last.rep = RegexRep::Any;
@@ -228,10 +224,10 @@ impl Regex {
                     },
 
                     _ => {
-                        return Err(Error::new(
-                            ErrorKind::Other,
-                            format!("Unexpected character found ({})", c),
-                        ))
+                        Some(RegexStep {
+                            rep: RegexRep::Exact(1),
+                            val: RegexVal::Literal(c),
+                        })
                     }
                 };
 
