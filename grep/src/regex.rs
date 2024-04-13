@@ -59,7 +59,7 @@ impl Regex {
                         None => {
                             return Err(Error::new(
                                 ErrorKind::Other,
-                                "Unexpected character found (1)",
+                                format!("Unexpected character found ({})", c),
                             ))
                         }
                     },
@@ -126,7 +126,7 @@ impl Regex {
                         None => {
                             return Err(Error::new(
                                 ErrorKind::Other,
-                                "Unexpected character found (2)",
+                                format!("Unexpected character found ({})", c),
                             ))
                         }
                     },
@@ -158,7 +158,7 @@ impl Regex {
                             } else {
                                 return Err(Error::new(
                                     ErrorKind::Other,
-                                    "Unexpected character found inside bracket",
+                                    format!("Unexpected character found ({}) inside bracket", c),
                                 ));
                             }
                         }
@@ -230,7 +230,7 @@ impl Regex {
                     _ => {
                         return Err(Error::new(
                             ErrorKind::Other,
-                            "Unexpected character found (3)",
+                            format!("Unexpected character found ({})", c),
                         ))
                     }
                 };
