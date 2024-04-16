@@ -1,15 +1,35 @@
 use crate::regex_class::RegexClass;
 
 #[derive(Debug, Clone)]
+/// Esta estructura representa un valor de la expression de una regex.
 pub enum RegexVal {
-    Literal(char), // Caracteres normales
+    /// Se busca que el valor sea un caracter especifico.
+    Literal(char),
+
+    /// Se busca que el valor sea cualquier caracter.
     Wildcard,
+
+    /// Se busca que el valor se encuentre dentro de un vector de caracteres.
     Allowed(Vec<char>),
+
+    /// Se busca que el valor NO se encuentre dentro de un vector de caracteres.
     NotAllowed(Vec<char>),
+
+    /// Se busca que el valor cumpla una serie de condiciones especificas.
     Class(RegexClass),
 }
 
 impl RegexVal {
+    /// Prueba si el valor recibido cumple con el tipo de RegexVal.
+    ///
+    /// # Ejemplo
+    ///
+    /// ```
+    /// use grep::regex_val::RegexVal;
+    /// let val = "a"
+    /// let regexval = RegexVal::Literal('a')
+    /// let size = val.matches(&val);
+    /// ```
     pub fn matches(&self, value: &str) -> usize {
         match self {
             Self::Literal(l) => match_literal(l, value),
@@ -21,6 +41,7 @@ impl RegexVal {
     }
 }
 
+/// Matchea un caracter con el valor recibido, en caso de matchear devuelve su longitud, sino devuelve cero. Esta funcion se utiliza de manera interna dentro de la funcion matches.
 fn match_literal(l: &char, value: &str) -> usize {
     if Some(*l) == value.chars().next() {
         l.len_utf8()
@@ -29,6 +50,7 @@ fn match_literal(l: &char, value: &str) -> usize {
     }
 }
 
+/// Comprueba que el valor recibido exista, en caso de matchear devuelve su longitud, sino devuelve cero. Esta funcion se utiliza de manera interna dentro de la funcion matches.
 fn match_wildcard(value: &str) -> usize {
     if let Some(w) = value.chars().next() {
         w.len_utf8()
@@ -37,6 +59,7 @@ fn match_wildcard(value: &str) -> usize {
     }
 }
 
+/// Comprueba que el valor recibido pertenezca a al vector de caracteres, en caso de matchear devuelve su longitud, sino devuelve cero. Esta funcion se utiliza de manera interna dentro de la funcion matches.
 fn match_allowed(v: &Vec<char>, value: &str) -> usize {
     if let Some(a) = value.chars().next() {
         if v.contains(&a) {
@@ -49,6 +72,7 @@ fn match_allowed(v: &Vec<char>, value: &str) -> usize {
     }
 }
 
+/// Comprueba que el valor recibido NO pertenezca a al vector de caracteres, en caso de matchear devuelve su longitud, sino devuelve cero. Esta funcion se utiliza de manera interna dentro de la funcion matches.
 fn match_not_allowed(v: &Vec<char>, value: &str) -> usize {
     if let Some(a) = value.chars().next() {
         if !v.contains(&a) {
@@ -61,6 +85,7 @@ fn match_not_allowed(v: &Vec<char>, value: &str) -> usize {
     }
 }
 
+/// Comprueba que el valor recibido forme parte de la clase de caracteres, en caso de matchear devuelve su longitud, sino devuelve cero. Esta funcion se utiliza de manera interna dentro de la funcion matches.
 fn match_class(class_type: &RegexClass, value: &str) -> usize {
     if let Some(a) = value.chars().next() {
         match class_type {

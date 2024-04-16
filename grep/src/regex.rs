@@ -7,16 +7,27 @@ use std::collections::VecDeque;
 use std::io::{Error, ErrorKind};
 
 #[derive(Debug, Clone)]
+/// Esta estructura representa una regex
 pub struct Regex {
+    /// Una regex esta comuesta por varias regex, cada una con uno o más RegexSteps.
     expression_steps: Vec<Vec<RegexStep>>,
 }
 
+/// Esta estructura se utiliza dentro de la funcion test para decidir cual loop hay que continuar
 enum LoopState {
     MainLoop,
     StepsLoop,
 }
 
 impl Regex {
+    /// Crea una regex utilizando la expression que recibe por parametro.
+    ///
+    /// # Ejemplo
+    ///
+    /// ```
+    /// use grep::regex::Regex;
+    /// let regex = Regex::new("ab.cd");
+    /// ```
     pub fn new(expression: &str) -> Result<Self, std::io::Error> {
         let mut expression_steps: Vec<Vec<RegexStep>> = vec![];
 
@@ -59,6 +70,16 @@ impl Regex {
         Ok(Regex { expression_steps })
     }
 
+    /// Prueba la regex contra un string. Devuelve true si el valor cumple con la regex o false si no la cumple.
+    ///
+    /// # Ejemplo
+    ///
+    /// ```
+    /// use grep::regex::Regex;
+    /// let value = "abecd"
+    /// let regex = Regex::new("ab.cd");
+    /// let result = regex.test(&value);
+    /// ```
     pub fn test(self, value: &str) -> Result<bool, std::io::Error> {
         if !value.is_ascii() {
             return Err(Error::new(ErrorKind::Other, "The input is not ASCII"));
@@ -98,6 +119,7 @@ impl Regex {
     }
 }
 
+/// Recibe un RegexStep que se esta ejecutando, una referencia al vector de RegexSteps previamente evaluados y una cola con RegexSteps. El objetivo de la función es retroceder a un RegexStep previo que sea backtrakeable, si lo encuentra devuelve la cantidad de posiciones a retroceder en el valor que se esta testeando, sino devuelve None. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion test.
 fn backtrack(
     current: RegexStep,
     evaluated: &mut Vec<EvaluatedStep>,
@@ -117,6 +139,7 @@ fn backtrack(
     None
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_dot() -> Option<RegexStep> {
     return Some(RegexStep {
         rep: RegexRep::Exact(1),
@@ -124,6 +147,7 @@ fn handle_dot() -> Option<RegexStep> {
     });
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_star(steps: &mut Vec<RegexStep>) -> Result<Option<RegexStep>, std::io::Error> {
     if let Some(last) = steps.last_mut() {
         last.rep = RegexRep::Any;
@@ -136,6 +160,7 @@ fn handle_star(steps: &mut Vec<RegexStep>) -> Result<Option<RegexStep>, std::io:
     }
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_backslash(
     char_iterator: &mut std::str::Chars,
 ) -> Result<Option<RegexStep>, std::io::Error> {
@@ -153,6 +178,7 @@ fn handle_backslash(
     }
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_brace(char_iterator: &mut std::str::Chars) -> Result<Option<RegexStep>, std::io::Error> {
     match char_iterator.next() {
         Some(char) => match char {
@@ -222,6 +248,7 @@ fn handle_brace(char_iterator: &mut std::str::Chars) -> Result<Option<RegexStep>
     }
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_bracket(
     steps: &mut Vec<RegexStep>,
     char_iterator: &mut std::str::Chars,
@@ -288,6 +315,7 @@ fn handle_bracket(
     }))
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_plus(steps: &mut Vec<RegexStep>) -> Result<Option<RegexStep>, std::io::Error> {
     let last_val: RegexVal;
     if let Some(last) = steps.last_mut() {
@@ -302,6 +330,7 @@ fn handle_plus(steps: &mut Vec<RegexStep>) -> Result<Option<RegexStep>, std::io:
     }))
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_question_mark(steps: &mut Vec<RegexStep>) -> Result<Option<RegexStep>, std::io::Error> {
     if let Some(last) = steps.last_mut() {
         last.rep = RegexRep::Optional;
@@ -311,6 +340,7 @@ fn handle_question_mark(steps: &mut Vec<RegexStep>) -> Result<Option<RegexStep>,
     Ok(None)
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_end_anchoring(
     steps: &mut Vec<RegexStep>,
     char_iterator: &mut std::str::Chars,
@@ -328,6 +358,7 @@ fn handle_end_anchoring(
     }
 }
 
+/// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_default(c: char) -> Option<RegexStep> {
     return Some(RegexStep {
         rep: RegexRep::Exact(1),
@@ -335,6 +366,7 @@ fn handle_default(c: char) -> Option<RegexStep> {
     });
 }
 
+/// Ejecuta un RegexStep del tipo RegexRep::Exact y devuelve un LoopState para indicar que por cual loop se debe continuar. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_exact(
     step: &RegexStep,
     index: &mut usize,
@@ -368,6 +400,7 @@ fn handle_exact(
     Ok(None)
 }
 
+/// Ejecuta un RegexStep del tipo RegexRep::Last y devuelve un LoopState para indicar que por cual loop se debe continuar. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_last(
     step: &RegexStep,
     index: &mut usize,
@@ -396,6 +429,7 @@ fn handle_last(
     }
 }
 
+/// Ejecuta un RegexStep del tipo RegexRep::Optional y devuelve un LoopState para indicar que por cual loop se debe continuar. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_optional(
     step: &RegexStep,
     index: &mut usize,
@@ -418,6 +452,7 @@ fn handle_optional(
     Ok(None)
 }
 
+/// Ejecuta un RegexStep del tipo RegexRep::Any y devuelve un LoopState para indicar que por cual loop se debe continuar. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_any(
     step: &RegexStep,
     index: &mut usize,
@@ -441,6 +476,7 @@ fn handle_any(
     Ok(None)
 }
 
+/// Ejecuta un RegexStep del tipo RegexRep::Range y devuelve un LoopState para indicar que por cual loop se debe continuar. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
 fn handle_range(
     step: &RegexStep,
     index: &mut usize,

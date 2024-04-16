@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::BufRead;
 use std::io::{BufReader, Error, ErrorKind};
 
-/// READ_ARGS: lee los argumentos pasados por comando y devuelve una lista con ellos
+/// Lee los argumentos pasados por comando y devuelve una lista con ellos
 pub fn read_args() -> Result<Vec<String>, std::io::Error> {
     let args: Vec<String> = env::args().collect();
 
@@ -16,7 +16,7 @@ pub fn read_args() -> Result<Vec<String>, std::io::Error> {
     Ok(args)
 }
 
-/// READ_LINES: lee el archivo indicado y devuelve una lista con cada linea
+/// Lee el archivo indicado y devuelve una lista con cada linea
 pub fn read_lines(filename: String) -> Result<Vec<String>, std::io::Error> {
     let mut rows = Vec::new();
     let file = File::open(filename)?;
