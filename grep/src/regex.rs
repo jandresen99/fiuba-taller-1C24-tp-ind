@@ -85,7 +85,7 @@ impl Regex {
                     RegexRep::Optional => handle_optional(&step, &mut index, &value, &mut stack)?,
                     RegexRep::Any => handle_any(&step, &mut index, &value, &mut stack)?,
                     RegexRep::Range(min, max) => {
-                        handle_range(&step, &mut index, &value, &mut stack, min, max)?
+                        handle_range(&step, &mut index, &value, &mut stack, min, max, &mut queue)?
                     }
                 };
                 match loop_state {
@@ -463,6 +463,7 @@ fn handle_range(
     stack: &mut Vec<EvaluatedStep>,
     min: Option<usize>,
     max: Option<usize>,
+    queue: &mut VecDeque<RegexStep>
 ) -> Result<Option<LoopState>, std::io::Error> {
     let mut keep_matching = true;
     let mut match_counter = 0;
@@ -472,11 +473,6 @@ fn handle_range(
         if match_size != 0 {
             match_counter += 1;
             *index += match_size;
-            stack.push(EvaluatedStep {
-                step: step.clone(),
-                match_size,
-                backtrackable: false,
-            });
             match (min, max) {
                 (Some(min_val), Some(max_val)) => {
                     if match_counter >= min_val && match_counter <= max_val {
@@ -502,7 +498,19 @@ fn handle_range(
                 (None, None) => matched_range = false,
             }
         } else {
-            keep_matching = false;
+            if !matched_range{
+                match backtrack(step.clone(), stack, queue) {
+                    Some(size) => {
+                        *index -= size + 1;
+                        return Ok(Some(LoopState::StepsLoop));
+                    }
+                    None => {
+                        return Ok(Some(LoopState::MainLoop))
+                    }
+                }
+            } else{
+                keep_matching = false;
+            }
         }
     }
 

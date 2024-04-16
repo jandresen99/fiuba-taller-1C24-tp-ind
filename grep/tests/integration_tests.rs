@@ -301,3 +301,11 @@ fn test_reentrega_3() {
 
     assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
 }
+
+#[test]
+fn test_reentrega_4() {
+    let expression = "abc{2,5}d abc{0,}d";
+    let value1 = "abcccd abcd";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}
