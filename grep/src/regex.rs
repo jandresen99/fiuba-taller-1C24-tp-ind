@@ -21,13 +21,6 @@ enum LoopState {
 
 impl Regex {
     /// Crea una regex utilizando la expression que recibe por parametro.
-    ///
-    /// # Ejemplo
-    ///
-    /// ```
-    /// use grep::regex::Regex;
-    /// let regex = Regex::new("ab.cd");
-    /// ```
     pub fn new(expression: &str) -> Result<Self, std::io::Error> {
         let mut expression_steps: Vec<Vec<RegexStep>> = vec![];
 
@@ -71,15 +64,6 @@ impl Regex {
     }
 
     /// Prueba la regex contra un string. Devuelve true si el valor cumple con la regex o false si no la cumple.
-    ///
-    /// # Ejemplo
-    ///
-    /// ```
-    /// use grep::regex::Regex;
-    /// let value = "abecd"
-    /// let regex = Regex::new("ab.cd");
-    /// let result = regex.test(&value);
-    /// ```
     pub fn test(self, value: &str) -> Result<bool, std::io::Error> {
         if !value.is_ascii() {
             return Err(Error::new(ErrorKind::Other, "The input is not ASCII"));

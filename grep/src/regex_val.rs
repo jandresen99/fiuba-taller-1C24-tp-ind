@@ -21,15 +21,6 @@ pub enum RegexVal {
 
 impl RegexVal {
     /// Prueba si el valor recibido cumple con el tipo de RegexVal.
-    ///
-    /// # Ejemplo
-    ///
-    /// ```
-    /// use grep::regex_val::RegexVal;
-    /// let val = "a"
-    /// let regexval = RegexVal::Literal('a')
-    /// let size = val.matches(&val);
-    /// ```
     pub fn matches(&self, value: &str) -> usize {
         match self {
             Self::Literal(l) => match_literal(l, value),
