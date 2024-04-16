@@ -293,3 +293,11 @@ fn test_reentrega_2() {
 
     assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
 }
+
+#[test]
+fn test_reentrega_3() {
+    let expression = "hola* noah{1,6}";
+    let value1 = "hola noah";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}

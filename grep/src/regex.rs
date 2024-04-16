@@ -237,13 +237,6 @@ fn handle_bracket(
     steps: &mut Vec<RegexStep>,
     char_iterator: &mut std::str::Chars,
 ) -> Result<Option<RegexStep>, std::io::Error> {
-    let last_val: RegexVal;
-    if let Some(last) = steps.last_mut() {
-        last_val = last.val.clone()
-    } else {
-        return Err(Error::new(ErrorKind::Other, "Unexpected '{' found"));
-    }
-
     let mut min = String::new();
     let mut max = String::new();
 
@@ -293,10 +286,13 @@ fn handle_bracket(
         }
     }
 
-    Ok(Some(RegexStep {
-        rep: RegexRep::Range(final_min, final_max),
-        val: last_val,
-    }))
+
+    if let Some(last) = steps.last_mut() {
+        last.rep = RegexRep::Range(final_min, final_max);
+        Ok(None)
+    } else {
+        return Err(Error::new(ErrorKind::Other, "Unexpected '{' found"));
+    }
 }
 
 /// Devuelve un RegexStep que corresponda con el caracter de la regex. Esta funcion se utiliza de manera interna dentro de los handlers utilizados en la funcion new.
@@ -362,7 +358,6 @@ fn handle_exact(
     let mut match_size = 0;
     for _ in 0..n {
         let size = step.val.matches(&value[*index..]);
-
         if size == 0 {
             match backtrack(step.clone(), stack, queue) {
                 Some(size) => {
@@ -470,7 +465,7 @@ fn handle_range(
     max: Option<usize>,
 ) -> Result<Option<LoopState>, std::io::Error> {
     let mut keep_matching = true;
-    let mut match_counter = 1;
+    let mut match_counter = 0;
     let mut matched_range = false;
     while keep_matching {
         let match_size = step.val.matches(&value[*index..]);
@@ -482,7 +477,6 @@ fn handle_range(
                 match_size,
                 backtrackable: false,
             });
-
             match (min, max) {
                 (Some(min_val), Some(max_val)) => {
                     if match_counter >= min_val && match_counter <= max_val {
