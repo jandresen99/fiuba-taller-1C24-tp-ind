@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-/// Un RegexStep representa un tipo de repetición que va a tener un RegexStep.
+/// Representa un tipo de repetición que va a tener un RegexStep.
 pub enum RegexRep {
     /// Se puede repetir varias veces
     Any,                                 // *
