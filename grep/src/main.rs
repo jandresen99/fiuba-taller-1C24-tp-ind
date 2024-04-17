@@ -26,5 +26,3 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
-// PENDIENTE: si no tengo un ^ adelante, le pondo un Any Wildcard al principio 1:27:50

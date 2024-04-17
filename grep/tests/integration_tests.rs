@@ -277,3 +277,35 @@ fn test_anchoring() {
         false
     );
 }
+
+#[test]
+fn test_reentrega_1() {
+    let expression = "ab.?d";
+    let value1 = "abd";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}
+
+#[test]
+fn test_reentrega_2() {
+    let expression = "hola joaquin{1,3}";
+    let value1 = "hola joaquinnnn";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}
+
+#[test]
+fn test_reentrega_3() {
+    let expression = "hola* noah{1,6}";
+    let value1 = "hola noah";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}
+
+#[test]
+fn test_reentrega_4() {
+    let expression = "abc{2,5}d abc{0,}d";
+    let value1 = "abcccd abcd";
+
+    assert_eq!(Regex::new(expression).unwrap().test(&value1).unwrap(), true);
+}
